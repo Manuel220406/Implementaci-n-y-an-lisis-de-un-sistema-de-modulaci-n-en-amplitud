@@ -1,0 +1,87 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fft import fft, fftfreq
+
+# --------------------------------------------------
+# 1. Parámetros generales
+# --------------------------------------------------
+fs = 50000       # Frecuencia de muestreo
+t = np.linspace(0, 0.01, int(fs*0.01))  # 10 ms
+fm = 500         # Frecuencia del mensaje
+fc = 5000        # Frecuencia de la portadora
+Ac = 1           # Amplitud de la portadora
+Am = 1           # Amplitud del mensaje
+ka = 0.9         # Índice de modulación
+
+# --------------------------------------------------
+# 2. Señal mensaje
+# --------------------------------------------------
+m = Am * np.sin(2 * np.pi * fm * t)
+
+plt.figure(figsize=(10,4))
+plt.plot(t, m)
+plt.title("Señal de mensaje")
+plt.xlabel("Tiempo [s]")
+plt.ylabel("Amplitud")
+plt.grid(True)
+plt.show()
+
+# --------------------------------------------------
+# 3. Modulación AM
+# --------------------------------------------------
+carrier = Ac * np.cos(2 * np.pi * fc * t)
+s = Ac * (1 + ka * m) * np.cos(2 * np.pi * fc * t)
+
+plt.figure(figsize=(10,4))
+plt.plot(t, s)
+plt.title("Señal AM modulada")
+plt.xlabel("Tiempo [s]")
+plt.ylabel("Amplitud")
+plt.grid(True)
+plt.show()
+
+# --------------------------------------------------
+# 4. Espectro de la señal AM
+# --------------------------------------------------
+N = len(s)
+S = np.abs(fft(s))/N
+freqs = fftfreq(N, 1/fs)
+
+plt.figure(figsize=(10,4))
+plt.plot(freqs[:N//2], S[:N//2])
+plt.title("Espectro de la señal AM")
+plt.xlabel("Frecuencia [Hz]")
+plt.ylabel("Magnitud")
+plt.grid(True)
+plt.show()
+
+# --------------------------------------------------
+# 5. Introducción de ruido AWGN
+# --------------------------------------------------
+SNR = 10  # dB
+noise = np.random.normal(0, np.sqrt(0.5*(10**(-SNR/10))), len(s))
+s_ruido = s + noise
+
+plt.figure(figsize=(10,4))
+plt.plot(t[:1000], s_ruido[:1000])
+plt.title("Señal AM con ruido (SNR = 10 dB)")
+plt.xlabel("Tiempo [s]")
+plt.ylabel("Amplitud")
+plt.grid(True)
+plt.show()
+
+# --------------------------------------------------
+# 6. Atenuación y distorsión (filtro pasa-bajas)
+# --------------------------------------------------
+from scipy.signal import butter, filtfilt
+
+b, a = butter(4, 0.1)         # Filtro pasa bajas
+s_dist = filtfilt(b, a, s)    # Distorsión simulada
+
+plt.figure(figsize=(10,4))
+plt.plot(t, s_dist)
+plt.title("Señal AM con distorsión (pasa-bajas)")
+plt.xlabel("Tiempo [s]")
+plt.ylabel("Amplitud")
+plt.grid(True)
+plt.show()
